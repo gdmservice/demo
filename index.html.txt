@@ -1,0 +1,92 @@
+import zipfile
+import os
+
+# Creează structura proiectului
+demo_dir = "gdm_repair_demo"
+os.makedirs(demo_dir, exist_ok=True)
+
+# index.html simplu cu demo funcțional
+html_content = """
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <title>GDM REPAIR SRL - Panou Admin</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
+    input, select, button { margin: 5px; padding: 8px; }
+    .sms-box { background: #e0ffe0; padding: 10px; margin-top: 10px; border: 1px solid #b2d8b2; }
+    .client-box { background: #fff; padding: 10px; margin-top: 10px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>GDM REPAIR SRL - Panou Admin</h1>
+  <label>Nume client: <input type="text" id="nume"></label>
+  <label>Telefon: <input type="text" id="telefon"></label>
+  <button onclick="adaugaClient()">Adaugă client</button>
+  <div id="clienti"></div>
+
+  <script>
+    let counter = 1234;
+    let clienti = [];
+
+    function adaugaClient() {
+      const nume = document.getElementById('nume').value.trim();
+      const telefon = document.getElementById('telefon').value.trim();
+      if (!nume || !telefon) return alert('Completează toate câmpurile');
+
+      const cod = 'GDM' + counter++;
+      const client = { nume, telefon, cod, status: 'Primire utilaj' };
+      clienti.push(client);
+      afiseazaClienti();
+      simuleazaSMS(client, 'Primire utilaj');
+    }
+
+    function schimbaStatus(index) {
+      const client = clienti[index];
+      const nouStatus = client.status === 'Primire utilaj' ? 'Reparație finalizată' : 'Primire utilaj';
+      client.status = nouStatus;
+      afiseazaClienti();
+      simuleazaSMS(client, nouStatus);
+    }
+
+    function simuleazaSMS(client, status) {
+      let mesaj = '';
+      if (status === 'Primire utilaj') {
+        mesaj = `GDM REPAIR SRL: Am înregistrat utilajul lui ${client.nume}. Revenim cu diagnostic.`;
+      } else {
+        mesaj = `GDM REPAIR SRL: Reparația pentru ${client.nume} este finalizată. Vă rugăm să ridicați utilajul.`;
+      }
+
+      const smsBox = document.createElement('div');
+      smsBox.className = 'sms-box';
+      smsBox.textContent = `SMS trimis la ${client.telefon}: ${mesaj}`;
+      document.body.appendChild(smsBox);
+    }
+
+    function afiseazaClienti() {
+      const container = document.getElementById('clienti');
+      container.innerHTML = '';
+      clienti.forEach((c, i) => {
+        const box = document.createElement('div');
+        box.className = 'client-box';
+        box.innerHTML = `<strong>${c.nume}</strong> (${c.telefon})<br>Status: ${c.status}<br>Cod client: ${c.cod}<br>
+        <button onclick="schimbaStatus(${i})">Schimbă status</button>`;
+        container.appendChild(box);
+      });
+    }
+  </script>
+</body>
+</html>
+"""
+
+with open(os.path.join(demo_dir, "index.html"), "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+# Creează fișierul ZIP
+with zipfile.ZipFile("gdm_repair_demo.zip", "w") as demo_zip:
+    for root, _, files in os.walk(demo_dir):
+        for file in files:
+            filepath = os.path.join(root, file)
+            arcname = os.path.relpath(filepath, demo_dir)
+            demo_zip.write(filepath, arcname)
