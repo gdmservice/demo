@@ -32,6 +32,25 @@
     let counter = 1234;
     let clienti = [];
 
+    // Încarcă clienții din localStorage la start
+    function incarcareClienti() {
+      const data = localStorage.getItem('clientiGDM');
+      if (data) {
+        clienti = JSON.parse(data);
+        if(clienti.length > 0){
+          // Actualizăm counter să continue de la ultimul cod
+          const lastCod = clienti[clienti.length -1].cod;
+          const num = parseInt(lastCod.replace('GDM','')) + 1;
+          if(!isNaN(num)) counter = num;
+        }
+      }
+    }
+
+    // Salvăm clienții în localStorage
+    function salvareClienti() {
+      localStorage.setItem('clientiGDM', JSON.stringify(clienti));
+    }
+
     function adaugaClient() {
       const nume = document.getElementById('nume').value.trim();
       const telefon = document.getElementById('telefon').value.trim();
@@ -46,6 +65,7 @@
       const cod = 'GDM' + counter++;
       const client = { nume, telefon, utilaj, status, cod };
       clienti.push(client);
+      salvareClienti();
       afiseazaClienti();
       simuleazaSMS(client);
 
@@ -58,11 +78,11 @@
 
     function schimbaStatus(index) {
       const client = clienti[index];
-      // Afișăm un prompt să alegi noul status
       const optiuni = ['Diagnosticare', 'Reparat', 'Nereparat', 'Nu se mai repară'];
       let nouStatus = prompt(`Alege noul status pentru ${client.nume}:\n` + optiuni.join('\n'), client.status);
       if (nouStatus && optiuni.includes(nouStatus)) {
         client.status = nouStatus;
+        salvareClienti();
         afiseazaClienti();
         simuleazaSMS(client);
       } else {
@@ -101,6 +121,12 @@
           <button onclick="schimbaStatus(${i})">Schimbă status</button>`;
         container.appendChild(box);
       });
+    }
+
+    // La încărcarea paginii, preluăm clienții salvați și afișăm
+    window.onload = () => {
+      incarcareClienti();
+      afiseazaClienti();
     }
   </script>
 </body>
