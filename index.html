@@ -57,17 +57,6 @@
       cursor: pointer;
     }
 
-    /* Ajustare lățime select client */
-    select#clientSelect {
-      width: 280px; /* lățime fixă mai mică */
-      padding: 8px 10px;
-      font-size: 1rem;
-      border-radius: 6px;
-      border: 1.8px solid #d1d9e6;
-      transition: border-color 0.3s ease;
-      cursor: pointer;
-    }
-
     /* Butoane */
     button {
       background-color: #2980b9;
@@ -321,14 +310,57 @@
       updateStatusActiv(null);
     }
 
-    function filtreazaClienti() {
-      const val = document.getElementById('cauta').value.toLowerCase();
-      if(!val) {
-        populateSelect();
-        return;
+    function salveazaModificariClient() {
+      const cod = document.getElementById('detalii-cod').textContent;
+      const client = clienti.find(c => c.cod === cod);
+      if(!client) return alert('Clientul nu a fost găsit.');
+
+      const statusNou = document.getElementById('detalii-status').value;
+
+      if(client.status !== statusNou) {
+        client.status = statusNou;
+
+        if(statusNou === 'Reparat') {
+          let contra = confirm("Reparația este contra cost?");
+          if(contra) {
+            let pret = prompt("Introdu prețul pentru reparație (ex: 250):", client.pret > 0 ? client.pret : '');
+            pret = parseFloat(pret);
+            if(isNaN(pret) || pret < 0) {
+              alert("Preț invalid, se va seta 0.");
+              pret = 0;
+            }
+            client.contraCost = true;
+            client.pret = pret;
+          } else {
+            client.contraCost = false;
+            client.pret = 0;
+          }
+        } else {
+          client.contraCost = false;
+          client.pret = 0;
+        }
+
+        salvareClienti();
+        afiseazaClientSelectat();
+        simuleazaSMS(client);
+      } else {
+        alert("Nu ați modificat statusul.");
       }
-      const filtrat = clienti.filter(c => c.nume.toLowerCase().includes(val) || c.cod.toLowerCase().includes(val));
-      populateSelect(filtrat);
+    }
+
+    function adaugaPiesaClient() {
+      const cod = document.getElementById('detalii-cod').textContent;
+      const client = clienti.find(c => c.cod === cod);
+      if(!client) return alert('Clientul nu a fost găsit.');
+
+      let piesa = prompt(`Introdu denumirea piesei schimbate pentru ${client.nume}:`);
+      if (piesa && piesa.trim() !== '') {
+        client.pieseSchimbate.push(piesa.trim());
+        salvareClienti();
+        afiseazaClientSelectat();
+      } else {
+        alert('Denumire piesă invalidă.');
+      }
     }
 
     function adaugaClientNou() {
@@ -337,79 +369,93 @@
       const utilaj = document.getElementById('utilajNou').value.trim();
       const status = document.getElementById('statusNou').value;
 
-      if(!nume || !telefon || !utilaj) {
-        alert('Completează toate câmpurile pentru client nou!');
+      if (!nume || !telefon || !utilaj) {
+        alert('Completează toate câmpurile!');
         return;
       }
 
-      const cod = 'GDM' + counter;
-      counter++;
+      const cod = 'GDM' + counter++;
+      const dataOra = formatDataOra(new Date());
 
-      const clientNou = {
-        nume,
-        telefon,
-        utilaj,
-        status,
-        cod,
-        dataOra: new Date().toLocaleDateString('ro-RO'),
-        contraCost: false,
-        pret: 0,
-        pieseSchimbate: []
-      };
+      const client = { nume, telefon, utilaj, status, cod, dataOra, contraCost: false, pret: 0, pieseSchimbate: [] };
+      clienti.push(client);
+      sorteazaClienti();
+      salvareClienti();
 
-      clienti.push(clientNou);
-      localStorage.setItem('clientiGDM', JSON.stringify(clienti));
       populateSelect();
+      document.getElementById('clientSelect').value = client.cod;
+      afiseazaClientSelectat();
+
       document.getElementById('numeNou').value = '';
       document.getElementById('telefonNou').value = '';
       document.getElementById('utilajNou').value = '';
       document.getElementById('statusNou').value = 'Diagnosticare';
 
-      alert('Client nou adăugat cu succes!');
+      updateStatusActiv(client);
+      simuleazaSMS(client);
     }
 
-    function salveazaModificariClient() {
-      const cod = document.getElementById('detalii-cod').textContent;
-      if(!cod || cod === '-') return;
-
-      const client = clienti.find(c => c.cod === cod);
-      if(!client) return;
-
-      client.status = document.getElementById('detalii-status').value;
-      localStorage.setItem('clientiGDM', JSON.stringify(clienti));
-      alert('Modificările au fost salvate.');
-      populateSelect();
+    function filtreazaClienti() {
+      const val = document.getElementById('cauta').value.trim().toLowerCase();
+      if (!val) {
+        populateSelect();
+        return;
+      }
+      const filtrati = clienti.filter(c => c.nume.toLowerCase().includes(val) || c.cod.toLowerCase().includes(val));
+      populateSelect(filtrati);
     }
 
-    function adaugaPiesaClient() {
-      const cod = document.getElementById('detalii-cod').textContent;
-      if(!cod || cod === '-') return;
+    function formatDataOra(date) {
+      const zi = String(date.getDate()).padStart(2, '0');
+      const luna = String(date.getMonth() + 1).padStart(2, '0');
+      const an = date.getFullYear();
+      const ora = String(date.getHours()).padStart(2, '0');
+      const minut = String(date.getMinutes()).padStart(2, '0');
+      return `${zi}.${luna}.${an}, ${ora}:${minut}`;
+    }
 
-      const piesa = prompt('Introdu numele piesei schimbate:');
-      if(!piesa || piesa.trim() === '') return;
-
-      const client = clienti.find(c => c.cod === cod);
-      if(!client) return;
-
-      client.pieseSchimbate.push(piesa.trim());
+    function salvareClienti() {
       localStorage.setItem('clientiGDM', JSON.stringify(clienti));
-      afiseazaClientSelectat();
+    }
+
+    function simuleazaSMS(client) {
+      let mesaj = `GDM REPAIR SRL: Utilajul ${client.utilaj} al clientului ${client.nume} are statusul: ${client.status}.`;
+      if(client.status === 'Diagnosticare') {
+        mesaj += ' Revenim cu diagnosticul.';
+      } else if(client.status === 'Reparat') {
+        mesaj += ' Reparația a fost finalizată.';
+        if(client.contraCost) {
+          mesaj += ` Costul este ${client.pret} RON. Vă rugăm să achitați.`;
+        } else {
+          mesaj += ' Serviciul este gratuit.';
+        }
+      } else if(client.status === 'Nereparat') {
+        mesaj += ' Reparația nu a putut fi efectuată.';
+      } else if(client.status === 'Nu se mai repară') {
+        mesaj += ' Utilajul nu va mai fi reparat conform deciziei clientului.';
+      }
+
+      const smsBox = document.createElement('div');
+      smsBox.className = 'sms-box';
+      smsBox.textContent = `SMS trimis la ${client.telefon}: ${mesaj}`;
+      document.body.appendChild(smsBox);
+
+      setTimeout(() => smsBox.remove(), 12000);
     }
 
     function updateStatusActiv(client) {
       const statusDiv = document.getElementById('status-activ');
-      if(client) {
-        statusDiv.textContent = `Status activ: ${client.status} - ${client.nume}`;
+      if(client){
+        statusDiv.textContent = `Status activ: ${client.nume} - ${client.status}`;
       } else {
         statusDiv.textContent = 'Status activ: Niciun client selectat';
       }
     }
 
-    // Încarcă clienții la încărcarea paginii
-    window.onload = () => {
+    window.onload = function() {
       incarcareClienti();
       stergeDetalii();
-    };
+    }
   </script>
 </body>
 </html>
