@@ -63,7 +63,7 @@
           if(!isNaN(num)) counter = num;
         }
       }
-      filtrati = clienti.slice();
+      // filtrati = clienti.slice(); // NU afișăm toți la încărcare
     }
 
     function salvareClienti() {
@@ -79,7 +79,6 @@
       return `${zi}.${luna}.${an}, ${ora}:${minut}`;
     }
 
-    // Funcția adaugă client, cu resetare câmp căutare și reaplicare filtru
     function adaugaClient() {
       const nume = document.getElementById('nume').value.trim();
       const telefon = document.getElementById('telefon').value.trim();
@@ -96,10 +95,11 @@
 
       const client = { nume, telefon, utilaj, status, cod, dataOra, contraCost: false, pret: 0, pieseSchimbate: [] };
       clienti.push(client);
-      filtrati = clienti.slice();
-
       salvareClienti();
-      afiseazaClienti();
+
+      // Afișăm doar clientul nou adăugat
+      afiseazaClienti([client]);
+
       simuleazaSMS(client);
       updateStatusActiv(client);
 
@@ -109,13 +109,50 @@
       document.getElementById('utilaj').value = '';
       document.getElementById('status').value = 'Diagnosticare';
 
-      // Golește câmpul de căutare și afișează toți clienții
+      // Golește câmpul de căutare
       document.getElementById('cauta').value = '';
-      cautaClient();
     }
 
-    function schimbaStatus(index) {
-      const client = filtrati[index];
+    // Modificăm afiseazaClienti ca să primească o listă opțională (default filtrati)
+    function afiseazaClienti(lista = filtrati) {
+      const container = document.getElementById('clienti');
+      container.innerHTML = '';
+      if(lista.length === 0){
+        container.innerHTML = '<p>Nu există clienți de afișat.</p>';
+        updateStatusActiv({nume: 'Niciun client', status: '-'});
+        return;
+      }
+
+      lista.forEach((client, i) => {
+        const box = document.createElement('div');
+        box.className = 'client-box';
+
+        let contraCostText = client.contraCost ? `Da, Preț: ${client.pret} RON` : 'Nu';
+        let pieseText = client.pieseSchimbate.length > 0 ? `<ul>${client.pieseSchimbate.map(p => `<li>${p}</li>`).join('')}</ul>` : 'Nicio piesă adăugată';
+
+        box.innerHTML = `<strong>${client.nume}</strong> (${client.telefon})<br>
+          Utilaj: ${client.utilaj}<br>
+          Status: ${client.status}<br>
+          Data aducerii: ${client.dataOra}<br>
+          Reparație contra cost: ${contraCostText}<br>
+          Piese schimbate: <div class="piese-list">${pieseText}</div>
+          Cod client: ${client.cod}<br>
+          <button onclick="schimbaStatusByCod('${client.cod}')">Schimbă status</button>
+          <button onclick="adaugaPiesaByCod('${client.cod}')">Adaugă piesă schimbată</button>
+        `;
+
+        container.appendChild(box);
+      });
+
+      updateStatusActiv(lista[0]);
+    }
+
+    // Functii noi pe baza codului client pentru a nu depinde de index (care se poate schimba)
+    function schimbaStatusByCod(cod) {
+      const idx = clienti.findIndex(c => c.cod === cod);
+      if(idx === -1) return alert('Clientul nu a fost găsit.');
+
+      const client = clienti[idx];
       const optiuni = ['Diagnosticare', 'Reparat', 'Nereparat', 'Nu se mai repară'];
       let nouStatus = prompt(`Alege noul status pentru ${client.nume}:\n` + optiuni.join('\n'), client.status);
 
@@ -142,14 +179,9 @@
           client.pret = 0;
         }
 
-        // Actualizează în lista completă (clienti)
-        const idxReal = clienti.findIndex(c => c.cod === client.cod);
-        if(idxReal !== -1){
-          clienti[idxReal] = client;
-          salvareClienti();
-        }
-
-        afiseazaClienti();
+        salvareClienti();
+        // Afiseaza doar clientul modificat după schimbare
+        afiseazaClienti([client]);
         simuleazaSMS(client);
         updateStatusActiv(client);
       } else {
@@ -157,19 +189,16 @@
       }
     }
 
-    function adaugaPiesa(index) {
-      const client = filtrati[index];
+    function adaugaPiesaByCod(cod) {
+      const idx = clienti.findIndex(c => c.cod === cod);
+      if(idx === -1) return alert('Clientul nu a fost găsit.');
+
+      const client = clienti[idx];
       let piesa = prompt(`Introdu denumirea piesei schimbate pentru ${client.nume}:`);
       if (piesa && piesa.trim() !== '') {
         client.pieseSchimbate.push(piesa.trim());
-
-        const idxReal = clienti.findIndex(c => c.cod === client.cod);
-        if(idxReal !== -1){
-          clienti[idxReal] = client;
-          salvareClienti();
-        }
-
-        afiseazaClienti();
+        salvareClienti();
+        afiseazaClienti([client]);
       } else {
         alert('Denumire piesă invalidă.');
       }
@@ -198,49 +227,17 @@
       document.body.appendChild(smsBox);
     }
 
-    function afiseazaClienti() {
-      const container = document.getElementById('clienti');
-      container.innerHTML = '';
-      if(filtrati.length === 0){
-        container.innerHTML = '<p>Nu există clienți de afișat.</p>';
-        updateStatusActiv({nume: 'Niciun client', status: '-'});
-        return;
-      }
-
-      filtrati.forEach((client, i) => {
-        const box = document.createElement('div');
-        box.className = 'client-box';
-
-        let contraCostText = client.contraCost ? `Da, Preț: ${client.pret} RON` : 'Nu';
-        let pieseText = client.pieseSchimbate.length > 0 ? `<ul>${client.pieseSchimbate.map(p => `<li>${p}</li>`).join('')}</ul>` : 'Nicio piesă adăugată';
-
-        box.innerHTML = `<strong>${client.nume}</strong> (${client.telefon})<br>
-          Utilaj: ${client.utilaj}<br>
-          Status: ${client.status}<br>
-          Data aducerii: ${client.dataOra}<br>
-          Reparație contra cost: ${contraCostText}<br>
-          Piese schimbate: <div class="piese-list">${pieseText}</div>
-          Cod client: ${client.cod}<br>
-          <button onclick="schimbaStatus(${i})">Schimbă status</button>
-          <button onclick="adaugaPiesa(${i})">Adaugă piesă schimbată</button>
-        `;
-
-        container.appendChild(box);
-      });
-
-      updateStatusActiv(filtrati[0]);
-    }
-
     function cautaClient() {
       const val = document.getElementById('cauta').value.trim().toLowerCase();
       if (!val) {
-        filtrati = clienti.slice();
-      } else {
-        filtrati = clienti.filter(c => 
-          c.nume.toLowerCase().includes(val) || c.cod.toLowerCase().includes(val)
-        );
-      }
-      afiseazaClienti();
+        document.getElementById('clienti').innerHTML = '<p>Introduceți un nume sau cod pentru a căuta un client.</p>';
+        updateStatusActiv({nume: 'Niciun client', status: '-'});
+        return;
+      } 
+      filtrati = clienti.filter(c => 
+        c.nume.toLowerCase().includes(val) || c.cod.toLowerCase().includes(val)
+      );
+      afiseazaClienti(filtrati);
     }
 
     function updateStatusActiv(client) {
@@ -248,10 +245,11 @@
       statusDiv.textContent = `Status activ: ${client.nume} - ${client.status}`;
     }
 
-    // Inițializare
     window.onload = function() {
       incarcareClienti();
-      afiseazaClienti();
+      // Nu afișăm nimic la start
+      document.getElementById('clienti').innerHTML = '<p>Introduceți un client sau căutați unul existent.</p>';
+      updateStatusActiv({nume: 'Niciun client', status: '-'});
     }
   </script>
 </body>
