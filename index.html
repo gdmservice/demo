@@ -79,6 +79,7 @@
       return `${zi}.${luna}.${an}, ${ora}:${minut}`;
     }
 
+    // Funcția adaugă client, cu resetare câmp căutare și reaplicare filtru
     function adaugaClient() {
       const nume = document.getElementById('nume').value.trim();
       const telefon = document.getElementById('telefon').value.trim();
@@ -86,7 +87,7 @@
       const status = document.getElementById('status').value;
 
       if (!nume || !telefon || !utilaj) {
-        alert('Completează toate câmpurile');
+        alert('Completează toate câmpurile!');
         return;
       }
 
@@ -102,11 +103,15 @@
       simuleazaSMS(client);
       updateStatusActiv(client);
 
+      // Resetează câmpurile de input
       document.getElementById('nume').value = '';
       document.getElementById('telefon').value = '';
       document.getElementById('utilaj').value = '';
       document.getElementById('status').value = 'Diagnosticare';
+
+      // Golește câmpul de căutare și afișează toți clienții
       document.getElementById('cauta').value = '';
+      cautaClient();
     }
 
     function schimbaStatus(index) {
@@ -199,35 +204,32 @@
           Piese schimbate: <div class="piese-list">${pieseText}</div>
           Cod client: ${client.cod}<br>
           <button onclick="schimbaStatus(${i})">Schimbă status</button>
-          <button onclick="adaugaPiesa(${i})">Adaugă piesă schimbată</button>`;
+          <button onclick="adaugaPiesa(${i})">Adaugă piesă schimbată</button>
+        `;
+
         container.appendChild(box);
       });
     }
 
-    function updateStatusActiv(client) {
-      const div = document.getElementById('status-activ');
-      if(client) {
-        let contraCostText = client.contraCost ? ` (Contra cost: ${client.pret} RON)` : '';
-        div.textContent = `Status activ: ${client.nume} - ${client.status}${contraCostText}`;
-      } else {
-        div.textContent = 'Status activ: Niciun client adăugat';
-      }
-    }
-
     function cautaClient() {
       const val = document.getElementById('cauta').value.trim().toLowerCase();
-      if(val === '') {
+      if (!val) {
         filtrati = clienti.slice();
       } else {
         filtrati = clienti.filter(c => 
-          c.nume.toLowerCase().includes(val) || 
-          c.cod.toLowerCase().includes(val)
+          c.nume.toLowerCase().includes(val) || c.cod.toLowerCase().includes(val)
         );
       }
       afiseazaClienti();
     }
 
-    window.onload = () => {
+    function updateStatusActiv(client) {
+      const statusDiv = document.getElementById('status-activ');
+      statusDiv.textContent = `Status activ: ${client.nume} - ${client.status}`;
+    }
+
+    // Inițializare
+    window.onload = function() {
       incarcareClienti();
       afiseazaClienti();
     }
