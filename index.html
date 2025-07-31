@@ -1,251 +1,439 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Manager Clienți</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    max-width: 900px;
-    margin: 20px auto;
-  }
-  h2 {
-    text-align: center;
-  }
-  label {
-    display: block;
-    margin: 10px 0 5px;
-    font-weight: bold;
-  }
-  select {
-    width: 250px; /* mai mic */
-    padding: 5px;
-    font-size: 14px;
-  }
-  .detalii {
-    margin-top: 20px;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    background: #f9f9f9;
-  }
-  .detalii label {
-    margin-top: 10px;
-  }
-  input[readonly], textarea[readonly] {
-    background: #eee;
-    border: 1px solid #ccc;
-    padding: 6px;
-    width: 100%;
-    resize: none;
-  }
-  select#detalii-status {
-    width: 200px;
-  }
-  button {
-    margin-top: 20px;
-    padding: 10px 18px;
-    font-size: 16px;
-    cursor: pointer;
-    background: #007bff;
-    border: none;
-    border-radius: 5px;
-    color: white;
-  }
-  button:hover {
-    background: #0056b3;
-  }
-  .sms-box {
-    background: #d1f1d1;
-    padding: 15px;
-    margin-top: 20px;
-    border-radius: 8px;
-    border: 1px solid #8ac38b;
-    font-weight: 600;
-    color: #2e7d32;
-    box-shadow: 0 2px 6px #b6e1b6;
-    max-width: 500px;
-    margin-left: auto;
-    margin-right: auto;
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 10000;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <title>GDM REPAIR SRL - Panou Admin</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f9fafb;
+      margin: 0; padding: 30px;
+      color: #333;
+    }
+    h1 {
+      text-align: center; margin-bottom: 30px;
+      color: #2c3e50;
+    }
+    .container {
+      max-width: 900px; margin: 0 auto;
+      background: white; padding: 25px 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block; margin-bottom: 8px;
+      font-weight: 600;
+      color: #34495e;
+    }
+    input[type="text"], select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1.8px solid #d1d9e6;
+      transition: border-color 0.3s ease;
+    }
+    input[type="text"]:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #2980b9;
+      box-shadow: 0 0 8px #2980b9aa;
+    }
+    select {
+      max-width: 300px; /* mai mic */
+      cursor: pointer;
+    }
+    button {
+      background-color: #2980b9;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 7px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 15px;
+      box-shadow: 0 4px 8px #2980b9aa;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+    button:hover:not(:disabled) {
+      background-color: #1f6391;
+    }
+    button:disabled {
+      background-color: #9bbad6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .detalii-client {
+      margin-top: 25px;
+      padding: 20px;
+      background: #f0f4f9;
+      border-radius: 10px;
+      box-shadow: inset 0 0 10px #d3dbe9;
+    }
+    .detalii-client p {
+      margin: 12px 0;
+      font-size: 1.1rem;
+      color: #2c3e50;
+    }
+    .detalii-client p b {
+      display: inline-block;
+      min-width: 140px;
+      color: #34495e;
+    }
+    .piese-list ul {
+      list-style: disc inside;
+      padding-left: 10px;
+      margin: 5px 0 0 0;
+      color: #34495e;
+    }
+    .sms-box {
+      background: #d1f1d1;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 8px;
+      border: 1px solid #8ac38b;
+      font-weight: 600;
+      color: #2e7d32;
+      box-shadow: 0 2px 6px #b6e1b6;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+      user-select: none;
+    }
+    #status-activ {
+      position: fixed;
+      top: 15px; right: 15px;
+      background: #2980b9;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1rem;
+      box-shadow: 0 0 15px #2980b9cc;
+      max-width: 320px;
+      text-align: center;
+      z-index: 1100;
+      user-select: none;
+    }
+    #cauta {
+      max-width: 400px;
+      margin-bottom: 20px;
+      font-size: 1.1rem;
+    }
+    h3 {
+      margin-top: 40px;
+      margin-bottom: 15px;
+      color: #34495e;
+      border-bottom: 2px solid #2980b9;
+      padding-bottom: 5px;
+      user-select: none;
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <h1>GDM REPAIR SRL - Panou Admin</h1>
 
-<h2>Manager Clienți - Status Utilaj</h2>
+    <label for="cauta">Caută client (nume sau cod):</label>
+    <input type="text" id="cauta" oninput="filtreazaClienti()" placeholder="Ex: Ion Popescu sau GDM1234" autocomplete="off" />
 
-<label for="client-select">Selectează client:</label>
-<select id="client-select">
-  <option value="">-- Alege client --</option>
-</select>
+    <label for="clientSelect">Selectează client:</label>
+    <select id="clientSelect" onchange="afiseazaClientSelectat()" aria-label="Select client">
+      <option value="">-- Alege client --</option>
+    </select>
 
-<div class="detalii" id="detalii-client" style="display:none;">
-  <label>Cod client:</label>
-  <div id="detalii-cod" style="font-weight:bold;"></div>
-  
-  <label>Nume client:</label>
-  <input type="text" id="detalii-nume" readonly />
-  
-  <label>Telefon:</label>
-  <input type="text" id="detalii-telefon" readonly />
-  
-  <label>Descriere utilaj:</label>
-  <textarea id="detalii-descriere" rows="3" readonly></textarea>
-  
-  <label>Status:</label>
-  <select id="detalii-status">
-    <option value="In asteptare">În așteptare</option>
-    <option value="In reparatie">În reparație</option>
-    <option value="Reparat">Reparat</option>
-    <option value="Livrat">Livrat</option>
-  </select>
+    <div class="detalii-client" id="detalii-client" aria-live="polite" aria-atomic="true">
+      <p><b>Nume:</b> <span id="detalii-nume">-</span></p>
+      <p><b>Telefon:</b> <span id="detalii-telefon">-</span></p>
+      <p><b>Utilaj:</b> <span id="detalii-utilaj">-</span></p>
+      <p><b>Status:</b>
+        <select id="detalii-status" style="max-width: 200px;">
+          <option value="Diagnosticare">Diagnosticare</option>
+          <option value="Reparat">Reparat</option>
+          <option value="Nereparat">Nereparat</option>
+          <option value="Nu se mai repară">Nu se mai repară</option>
+        </select>
+      </p>
+      <p><b>Cod client:</b> <span id="detalii-cod">-</span></p>
+      <p><b>Data aducerii:</b> <span id="detalii-data">-</span></p>
+      <p><b>Reparație contra cost:</b> <span id="detalii-contraCost">Nu</span></p>
+      <p><b>Preț:</b> <span id="detalii-pret">0 RON</span></p>
+      <p><b>Piese schimbate:</b>
+        <div class="piese-list" id="detalii-piese">Nicio piesă adăugată</div>
+      </p>
 
-  <button id="btn-salveaza">Salvează modificări</button>
-</div>
+      <button onclick="salveazaModificariClient()" disabled id="btnSalveaza" aria-disabled="true" title="Salvează modificările clientului">Salvează modificări</button>
+      <button onclick="adaugaPiesaClient()" disabled id="btnAdaugaPiesa" aria-disabled="true" title="Adaugă piesă schimbată clientului">Adaugă piesă schimbată</button>
+    </div>
 
-<script>
-  // Date clienti exemplu - poți modifica sau adăuga clienți noi
-  let clienti = JSON.parse(localStorage.getItem('clienti')) || [
-    {
-      cod: 'C001',
-      nume: 'Ion Popescu',
-      telefon: '0712345678',
-      descriere: 'Utilaj excavator X120',
-      status: 'In asteptare',
-      contraCost: false,
-      pret: 0
-    },
-    {
-      cod: 'C002',
-      nume: 'Maria Ionescu',
-      telefon: '0723456789',
-      descriere: 'Buldozer BD500',
-      status: 'In reparatie',
-      contraCost: false,
-      pret: 0
-    },
-    {
-      cod: 'C003',
-      nume: 'Andrei Georgescu',
-      telefon: '0734567890',
-      descriere: 'Mini excavator MEX300',
-      status: 'Reparat',
-      contraCost: true,
-      pret: 350
-    }
-  ];
+    <h3>Adaugă client nou</h3>
+    <label for="numeNou">Nume client:</label>
+    <input type="text" id="numeNou" autocomplete="off" />
 
-  const selectClient = document.getElementById('client-select');
-  const detaliiDiv = document.getElementById('detalii-client');
-  const detaliiCod = document.getElementById('detalii-cod');
-  const detaliiNume = document.getElementById('detalii-nume');
-  const detaliiTelefon = document.getElementById('detalii-telefon');
-  const detaliiDescriere = document.getElementById('detalii-descriere');
-  const detaliiStatus = document.getElementById('detalii-status');
-  const btnSalveaza = document.getElementById('btn-salveaza');
+    <label for="telefonNou">Telefon:</label>
+    <input type="text" id="telefonNou" autocomplete="off" />
 
-  // Populare lista clienti
-  function populeazaClienti() {
-    selectClient.innerHTML = '<option value="">-- Alege client --</option>';
-    clienti.forEach(client => {
-      const opt = document.createElement('option');
-      opt.value = client.cod;
-      opt.textContent = `${client.nume} (${client.cod})`;
-      selectClient.appendChild(opt);
-    });
-  }
+    <label for="utilajNou">Utilaj:</label>
+    <input type="text" id="utilajNou" placeholder="Ex: Motocoasă, Drujbă" autocomplete="off" />
 
-  populeazaClienti();
+    <label for="statusNou">Status:</label>
+    <select id="statusNou">
+      <option value="Diagnosticare">Diagnosticare</option>
+      <option value="Reparat">Reparat</option>
+      <option value="Nereparat">Nereparat</option>
+      <option value="Nu se mai repară">Nu se mai repară</option>
+    </select>
 
-  // Afiseaza detaliile clientului selectat
-  function afiseazaClientSelectat() {
-    const codSelectat = selectClient.value;
-    if(!codSelectat) {
-      detaliiDiv.style.display = 'none';
-      return;
-    }
-    const client = clienti.find(c => c.cod === codSelectat);
-    if(!client) {
-      alert('Clientul nu a fost găsit.');
-      detaliiDiv.style.display = 'none';
-      return;
-    }
-    detaliiDiv.style.display = 'block';
-    detaliiCod.textContent = client.cod;
-    detaliiNume.value = client.nume;
-    detaliiTelefon.value = client.telefon;
-    detaliiDescriere.value = client.descriere;
-    detaliiStatus.value = client.status;
-  }
+    <button onclick="adaugaClientNou()">Adaugă client nou</button>
+  </div>
 
-  selectClient.addEventListener('change', afiseazaClientSelectat);
+  <div id="status-activ" role="status" aria-live="polite">Status activ: Niciun client selectat</div>
 
-  // Salvare modificari
-  function salvareClienti() {
-    localStorage.setItem('clienti', JSON.stringify(clienti));
-  }
+  <script>
+    let clienti = [];
+    let counter = 1234;
 
-  function simuleazaSMS(client) {
-    let mesaj = `Statusul utilajului dumneavoastră a fost actualizat la "${client.status}".`;
-    if(client.status === 'Reparat' && client.contraCost) {
-      mesaj += ` Cost reparație: ${client.pret} lei.`;
-    }
-    const smsBox = document.createElement('div');
-    smsBox.className = 'sms-box';
-    smsBox.textContent = `SMS trimis la ${client.telefon}: ${mesaj}`;
-    document.body.appendChild(smsBox);
-    setTimeout(() => smsBox.remove(), 12000);
-  }
-
-  function salveazaModificariClient() {
-    const cod = detaliiCod.textContent;
-    const client = clienti.find(c => c.cod === cod);
-    if(!client) return alert('Clientul nu a fost găsit.');
-
-    const statusNou = detaliiStatus.value;
-
-    if(client.status !== statusNou) {
-      client.status = statusNou;
-
-      if(statusNou === 'Reparat') {
-        let contra = confirm("Reparația este contra cost?");
-        if(contra) {
-          let pret = prompt("Introdu prețul pentru reparație (ex: 250):", client.pret > 0 ? client.pret : '');
-          pret = parseFloat(pret);
-          if(isNaN(pret) || pret < 0) {
-            alert("Preț invalid, se va seta 0.");
-            pret = 0;
-          }
-          client.contraCost = true;
-          client.pret = pret;
-        } else {
-          client.contraCost = false;
-          client.pret = 0;
+    function incarcareClienti() {
+      const data = localStorage.getItem('clientiGDM');
+      if (data) {
+        clienti = JSON.parse(data);
+        if(clienti.length > 0){
+          const lastCod = clienti[clienti.length -1].cod;
+          const num = parseInt(lastCod.replace('GDM','')) + 1;
+          if(!isNaN(num)) counter = num;
         }
-      } else {
-        client.contraCost = false;
-        client.pret = 0;
+      }
+      sorteazaClienti();
+      populateSelect();
+    }
+
+    function sorteazaClienti() {
+      clienti.sort((a,b) => a.nume.localeCompare(b.nume));
+    }
+
+    function populateSelect(filtrat = null) {
+      const select = document.getElementById('clientSelect');
+      select.innerHTML = '<option value="">-- Alege client --</option>';
+      let lista = filtrat || clienti;
+      sorteazaClienti();
+
+      lista.forEach(client => {
+        const option = document.createElement('option');
+        option.value = client.cod;
+        option.textContent = `${client.nume} (${client.cod})`;
+        select.appendChild(option);
+      });
+    }
+
+    function afiseazaClientSelectat() {
+      const cod = document.getElementById('clientSelect').value;
+      if (!cod) {
+        stergeDetalii();
+        return;
       }
 
-      salvareClienti();
-      afiseazaClientSelectat();
-      simuleazaSMS(client);
+      const client = clienti.find(c => c.cod === cod);
+      if(!client) {
+        stergeDetalii();
+        return;
+      }
 
-    } else {
-      alert("Nu ați modificat statusul.");
+      document.getElementById('detalii-nume').textContent = client.nume;
+      document.getElementById('detalii-telefon').textContent = client.telefon;
+      document.getElementById('detalii-utilaj').textContent = client.utilaj;
+      document.getElementById('detalii-status').value = client.status;
+      document.getElementById('detalii-cod').textContent = client.cod;
+      document.getElementById('detalii-data').textContent = client.dataOra;
+      document.getElementById('detalii-contraCost').textContent = client.contraCost ? 'Da' : 'Nu';
+      document.getElementById('detalii-pret').textContent = client.pret + ' RON';
+
+      const pieseDiv = document.getElementById('detalii-piese');
+      if(client.piese && client.piese.length > 0){
+        let ul = '<ul>';
+        client.piese.forEach(p => {
+          ul += `<li>${p}</li>`;
+        });
+        ul += '</ul>';
+        pieseDiv.innerHTML = ul;
+      } else {
+        pieseDiv.textContent = 'Nicio piesă adăugată';
+      }
+
+      // activează butoane
+      document.getElementById('btnSalveaza').disabled = false;
+      document.getElementById('btnSalveaza').setAttribute('aria-disabled', 'false');
+      document.getElementById('btnAdaugaPiesa').disabled = false;
+      document.getElementById('btnAdaugaPiesa').setAttribute('aria-disabled', 'false');
+
+      document.getElementById('status-activ').textContent = `Status activ: Client selectat - ${client.nume}`;
     }
-  }
 
-  btnSalveaza.addEventListener('click', salveazaModificariClient);
+    function stergeDetalii() {
+      document.getElementById('detalii-nume').textContent = '-';
+      document.getElementById('detalii-telefon').textContent = '-';
+      document.getElementById('detalii-utilaj').textContent = '-';
+      document.getElementById('detalii-status').value = 'Diagnosticare';
+      document.getElementById('detalii-cod').textContent = '-';
+      document.getElementById('detalii-data').textContent = '-';
+      document.getElementById('detalii-contraCost').textContent = 'Nu';
+      document.getElementById('detalii-pret').textContent = '0 RON';
+      document.getElementById('detalii-piese').textContent = 'Nicio piesă adăugată';
 
-  // La încărcare afișează detalii dacă e selectat un client
-  if(selectClient.value) afiseazaClientSelectat();
+      document.getElementById('btnSalveaza').disabled = true;
+      document.getElementById('btnSalveaza').setAttribute('aria-disabled', 'true');
+      document.getElementById('btnAdaugaPiesa').disabled = true;
+      document.getElementById('btnAdaugaPiesa').setAttribute('aria-disabled', 'true');
 
-</script>
+      document.getElementById('status-activ').textContent = 'Status activ: Niciun client selectat';
+    }
+
+    function adaugaClientNou() {
+      const nume = document.getElementById('numeNou').value.trim();
+      const telefon = document.getElementById('telefonNou').value.trim();
+      const utilaj = document.getElementById('utilajNou').value.trim();
+      const status = document.getElementById('statusNou').value;
+
+      if(nume.length < 3){
+        alert('Numele clientului trebuie să aibă cel puțin 3 caractere.');
+        return;
+      }
+      if(telefon.length < 7){
+        alert('Introduceți un telefon valid.');
+        return;
+      }
+      if(utilaj.length < 2){
+        alert('Introduceți utilajul clientului.');
+        return;
+      }
+
+      const codClient = 'GDM' + counter++;
+      const dataOra = new Date().toLocaleString('ro-RO');
+
+      const clientNou = {
+        nume,
+        telefon,
+        utilaj,
+        status,
+        cod: codClient,
+        dataOra,
+        contraCost: false,
+        pret: 0,
+        piese: []
+      };
+
+      clienti.push(clientNou);
+      salveazaClientiInStorage();
+      populateSelect();
+      document.getElementById('clientSelect').value = codClient;
+      afiseazaClientSelectat();
+
+      // Curăță formularul de adăugare
+      document.getElementById('numeNou').value = '';
+      document.getElementById('telefonNou').value = '';
+      document.getElementById('utilajNou').value = '';
+      document.getElementById('statusNou').value = 'Diagnosticare';
+
+      alert(`Clientul "${nume}" a fost adăugat cu codul ${codClient}.`);
+    }
+
+    function salveazaModificariClient() {
+      const cod = document.getElementById('clientSelect').value;
+      if (!cod) return alert('Selectați un client mai întâi.');
+
+      const client = clienti.find(c => c.cod === cod);
+      if(!client) return alert('Clientul nu a fost găsit.');
+
+      const statusSelect = document.getElementById('detalii-status');
+      const statusNou = statusSelect.value;
+
+      // Dacă statusul este schimbat la "Reparat", întrebăm dacă este contra cost și cerem prețul
+      if(client.status !== 'Reparat' && statusNou === 'Reparat') {
+        const contra = confirm('Este reparația contra cost?');
+        client.contraCost = contra;
+        if(contra){
+          let pretCorect = false;
+          let pretNou = 0;
+          while(!pretCorect){
+            const inputPret = prompt('Introduceți prețul reparației în RON:', '0');
+            if(inputPret === null){
+              alert('Prețul nu a fost introdus. Operațiunea anulată.');
+              return; // nu se salvează modificarea statusului
+            }
+            pretNou = Number(inputPret);
+            if(!isNaN(pretNou) && pretNou >= 0){
+              pretCorect = true;
+            } else {
+              alert('Introduceți un număr valid pentru preț.');
+            }
+          }
+          client.pret = pretNou;
+        } else {
+          client.pret = 0;
+        }
+      }
+
+      client.status = statusNou;
+
+      salveazaClientiInStorage();
+      afiseazaClientSelectat();
+      trimiteSMS(client);
+    }
+
+    function trimiteSMS(client) {
+      // Simulare trimitere SMS (aici poți integra API real)
+      const smsText = `Salut ${client.nume}, utilajul tău (${client.utilaj}) este acum cu status: ${client.status}.`;
+      afiseazaMesajSMS(smsText);
+    }
+
+    function afiseazaMesajSMS(text) {
+      // Șterge mesajul vechi dacă există
+      let smsBox = document.querySelector('.sms-box');
+      if(smsBox) smsBox.remove();
+
+      smsBox = document.createElement('div');
+      smsBox.className = 'sms-box';
+      smsBox.textContent = `Mesaj trimis către client: ${text}`;
+
+      document.body.appendChild(smsBox);
+
+      // Mesaj dispare după 6 secunde
+      setTimeout(() => {
+        smsBox.remove();
+      }, 6000);
+    }
+
+    function adaugaPiesaClient() {
+      const cod = document.getElementById('clientSelect').value;
+      if(!cod) return alert('Selectați un client pentru a adăuga piesă.');
+
+      const piesa = prompt('Introduceți numele piesei schimbate:');
+      if(piesa && piesa.trim().length > 1){
+        const client = clienti.find(c => c.cod === cod);
+        if(!client.piese) client.piese = [];
+        client.piese.push(piesa.trim());
+        salveazaClientiInStorage();
+        afiseazaClientSelectat();
+      }
+    }
+
+    function salveazaClientiInStorage() {
+      localStorage.setItem('clientiGDM', JSON.stringify(clienti));
+    }
+
+    function filtreazaClienti() {
+      const text = document.getElementById('cauta').value.toLowerCase();
+      if(text.length < 2){
+        populateSelect();
+        return;
+      }
+      const filtrat = clienti.filter(c => c.nume.toLowerCase().includes(text) || c.cod.toLowerCase().includes(text));
+      populateSelect(filtrat);
+    }
+
+    // Init
+    incarcareClienti();
+    stergeDetalii();
+  </script>
 </body>
 </html>
