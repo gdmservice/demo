@@ -5,7 +5,7 @@
   <title>GDM REPAIR SRL - Panou Admin</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
-    input, button { margin: 5px; padding: 8px; }
+    input, select, button { margin: 5px; padding: 8px; }
     .sms-box { background: #e0ffe0; padding: 10px; margin-top: 10px; border: 1px solid #b2d8b2; }
     .client-box { background: #fff; padding: 10px; margin-top: 10px; border: 1px solid #ccc; }
   </style>
@@ -13,8 +13,17 @@
 <body>
   <h1>GDM REPAIR SRL - Panou Admin</h1>
 
-  <label>Nume client: <input type="text" id="nume" /></label>
-  <label>Telefon: <input type="text" id="telefon" /></label>
+  <label>Nume client: <input type="text" id="nume" /></label><br />
+  <label>Telefon: <input type="text" id="telefon" /></label><br />
+  <label>Utilaj: <input type="text" id="utilaj" placeholder="Ex: Motocoasă, Drujbă" /></label><br />
+  <label>Status: 
+    <select id="status">
+      <option value="Diagnosticare">Diagnosticare</option>
+      <option value="Reparat">Reparat</option>
+      <option value="Nereparat">Nereparat</option>
+      <option value="Nu se mai repară">Nu se mai repară</option>
+    </select>
+  </label><br />
   <button onclick="adaugaClient()">Adaugă client</button>
 
   <div id="clienti"></div>
@@ -26,35 +35,51 @@
     function adaugaClient() {
       const nume = document.getElementById('nume').value.trim();
       const telefon = document.getElementById('telefon').value.trim();
-      if (!nume || !telefon) {
+      const utilaj = document.getElementById('utilaj').value.trim();
+      const status = document.getElementById('status').value;
+
+      if (!nume || !telefon || !utilaj) {
         alert('Completează toate câmpurile');
         return;
       }
 
       const cod = 'GDM' + counter++;
-      const client = { nume, telefon, cod, status: 'Primire utilaj' };
+      const client = { nume, telefon, utilaj, status, cod };
       clienti.push(client);
       afiseazaClienti();
-      simuleazaSMS(client, 'Primire utilaj');
+      simuleazaSMS(client);
 
       // Curățare câmpuri
       document.getElementById('nume').value = '';
       document.getElementById('telefon').value = '';
+      document.getElementById('utilaj').value = '';
+      document.getElementById('status').value = 'Diagnosticare';
     }
 
     function schimbaStatus(index) {
       const client = clienti[index];
-      client.status = client.status === 'Primire utilaj' ? 'Reparație finalizată' : 'Primire utilaj';
-      afiseazaClienti();
-      simuleazaSMS(client, client.status);
+      // Afișăm un prompt să alegi noul status
+      const optiuni = ['Diagnosticare', 'Reparat', 'Nereparat', 'Nu se mai repară'];
+      let nouStatus = prompt(`Alege noul status pentru ${client.nume}:\n` + optiuni.join('\n'), client.status);
+      if (nouStatus && optiuni.includes(nouStatus)) {
+        client.status = nouStatus;
+        afiseazaClienti();
+        simuleazaSMS(client);
+      } else {
+        alert('Status invalid sau modificare anulată');
+      }
     }
 
-    function simuleazaSMS(client, status) {
-      let mesaj = '';
-      if (status === 'Primire utilaj') {
-        mesaj = `GDM REPAIR SRL: Am înregistrat utilajul lui ${client.nume}. Revenim cu diagnostic.`;
-      } else {
-        mesaj = `GDM REPAIR SRL: Reparația pentru ${client.nume} este finalizată. Vă rugăm să ridicați utilajul.`;
+    function simuleazaSMS(client) {
+      let mesaj = `GDM REPAIR SRL: Utilajul ${client.utilaj} al clientului ${client.nume} are statusul: ${client.status}.`;
+      if(client.status === 'Diagnosticare') {
+        mesaj += ' Revenim cu diagnosticul.';
+      } else if(client.status === 'Reparat') {
+        mesaj += ' Reparația a fost finalizată. Vă rugăm să ridicați utilajul.';
+      } else if(client.status === 'Nereparat') {
+        mesaj += ' Reparația nu a putut fi efectuată.';
+      } else if(client.status === 'Nu se mai repară') {
+        mesaj += ' Utilajul nu va mai fi reparat conform deciziei clientului.';
       }
 
       const smsBox = document.createElement('div');
@@ -70,6 +95,7 @@
         const box = document.createElement('div');
         box.className = 'client-box';
         box.innerHTML = `<strong>${client.nume}</strong> (${client.telefon})<br>
+          Utilaj: ${client.utilaj}<br>
           Status: ${client.status}<br>
           Cod client: ${client.cod}<br>
           <button onclick="schimbaStatus(${i})">Schimbă status</button>`;
