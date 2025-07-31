@@ -32,13 +32,11 @@
     let counter = 1234;
     let clienti = [];
 
-    // Încarcă clienții din localStorage la start
     function incarcareClienti() {
       const data = localStorage.getItem('clientiGDM');
       if (data) {
         clienti = JSON.parse(data);
         if(clienti.length > 0){
-          // Actualizăm counter să continue de la ultimul cod
           const lastCod = clienti[clienti.length -1].cod;
           const num = parseInt(lastCod.replace('GDM','')) + 1;
           if(!isNaN(num)) counter = num;
@@ -46,9 +44,18 @@
       }
     }
 
-    // Salvăm clienții în localStorage
     function salvareClienti() {
       localStorage.setItem('clientiGDM', JSON.stringify(clienti));
+    }
+
+    // Formatează data și ora în format DD.MM.YYYY, HH:MM
+    function formatDataOra(date) {
+      const zi = String(date.getDate()).padStart(2, '0');
+      const luna = String(date.getMonth() + 1).padStart(2, '0');
+      const an = date.getFullYear();
+      const ora = String(date.getHours()).padStart(2, '0');
+      const minut = String(date.getMinutes()).padStart(2, '0');
+      return `${zi}.${luna}.${an}, ${ora}:${minut}`;
     }
 
     function adaugaClient() {
@@ -63,13 +70,14 @@
       }
 
       const cod = 'GDM' + counter++;
-      const client = { nume, telefon, utilaj, status, cod };
+      const dataOra = formatDataOra(new Date());
+
+      const client = { nume, telefon, utilaj, status, cod, dataOra };
       clienti.push(client);
       salvareClienti();
       afiseazaClienti();
       simuleazaSMS(client);
 
-      // Curățare câmpuri
       document.getElementById('nume').value = '';
       document.getElementById('telefon').value = '';
       document.getElementById('utilaj').value = '';
@@ -117,13 +125,13 @@
         box.innerHTML = `<strong>${client.nume}</strong> (${client.telefon})<br>
           Utilaj: ${client.utilaj}<br>
           Status: ${client.status}<br>
+          Data aducerii: ${client.dataOra}<br>
           Cod client: ${client.cod}<br>
           <button onclick="schimbaStatus(${i})">Schimbă status</button>`;
         container.appendChild(box);
       });
     }
 
-    // La încărcarea paginii, preluăm clienții salvați și afișăm
     window.onload = () => {
       incarcareClienti();
       afiseazaClienti();
