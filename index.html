@@ -5,7 +5,7 @@
   <title>GDM REPAIR SRL - Panou Admin</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
-    input, select, button { margin: 5px; padding: 8px; }
+    input, select, button, textarea { margin: 5px; padding: 8px; }
     .sms-box { background: #e0ffe0; padding: 10px; margin-top: 10px; border: 1px solid #b2d8b2; }
     .client-box { background: #fff; padding: 10px; margin-top: 10px; border: 1px solid #ccc; }
     #status-activ {
@@ -19,10 +19,17 @@
       max-width: 300px;
       z-index: 1000;
     }
+    .piese-list {
+      background: #eef9ff; padding: 8px; margin-top: 8px; border: 1px solid #99ccff; max-width: 400px;
+    }
   </style>
 </head>
 <body>
   <h1>GDM REPAIR SRL - Panou Admin</h1>
+
+  <label>Caută client (nume sau cod): <input type="text" id="cauta" oninput="cautaClient()" placeholder="Ex: Ion Popescu sau GDM1234" style="width:300px;" /></label>
+
+  <hr>
 
   <label>Nume client: <input type="text" id="nume" /></label><br />
   <label>Telefon: <input type="text" id="telefon" /></label><br />
@@ -44,6 +51,7 @@
   <script>
     let counter = 1234;
     let clienti = [];
+    let filtrati = [];
 
     function incarcareClienti() {
       const data = localStorage.getItem('clientiGDM');
@@ -53,9 +61,9 @@
           const lastCod = clienti[clienti.length -1].cod;
           const num = parseInt(lastCod.replace('GDM','')) + 1;
           if(!isNaN(num)) counter = num;
-          updateStatusActiv(clienti[clienti.length -1]);
         }
       }
+      filtrati = clienti.slice();
     }
 
     function salvareClienti() {
@@ -82,11 +90,16 @@
         return;
       }
 
+      // Verific dacă clientul există deja după nume + telefon + utilaj (optional)
+      // Poți adăuga validare după cod dacă vrei
+
       const cod = 'GDM' + counter++;
       const dataOra = formatDataOra(new Date());
 
-      const client = { nume, telefon, utilaj, status, cod, dataOra, contraCost: false, pret: 0 };
+      const client = { nume, telefon, utilaj, status, cod, dataOra, contraCost: false, pret: 0, pieseSchimbate: [] };
       clienti.push(client);
+      filtrati = clienti.slice();
+
       salvareClienti();
       afiseazaClienti();
       simuleazaSMS(client);
@@ -96,10 +109,11 @@
       document.getElementById('telefon').value = '';
       document.getElementById('utilaj').value = '';
       document.getElementById('status').value = 'Diagnosticare';
+      document.getElementById('cauta').value = '';
     }
 
     function schimbaStatus(index) {
-      const client = clienti[index];
+      const client = filtrati[index];
       const optiuni = ['Diagnosticare', 'Reparat', 'Nereparat', 'Nu se mai repară'];
       let nouStatus = prompt(`Alege noul status pentru ${client.nume}:\n` + optiuni.join('\n'), client.status);
 
@@ -122,7 +136,6 @@
             client.pret = 0;
           }
         } else {
-          // resetăm dacă nu e reparat
           client.contraCost = false;
           client.pret = 0;
         }
@@ -133,6 +146,18 @@
         updateStatusActiv(client);
       } else {
         alert('Status invalid sau modificare anulată');
+      }
+    }
+
+    function adaugaPiesa(index) {
+      const client = filtrati[index];
+      let piesa = prompt(`Introdu denumirea piesei schimbate pentru ${client.nume}:`);
+      if (piesa && piesa.trim() !== '') {
+        client.pieseSchimbate.push(piesa.trim());
+        salvareClienti();
+        afiseazaClienti();
+      } else {
+        alert('Denumire piesă invalidă.');
       }
     }
 
@@ -162,19 +187,22 @@
     function afiseazaClienti() {
       const container = document.getElementById('clienti');
       container.innerHTML = '';
-      clienti.forEach((client, i) => {
+      filtrati.forEach((client, i) => {
         const box = document.createElement('div');
         box.className = 'client-box';
 
         let contraCostText = client.contraCost ? `Da, Preț: ${client.pret} RON` : 'Nu';
-        
+        let pieseText = client.pieseSchimbate.length > 0 ? `<ul>${client.pieseSchimbate.map(p => `<li>${p}</li>`).join('')}</ul>` : 'Nicio piesă adăugată';
+
         box.innerHTML = `<strong>${client.nume}</strong> (${client.telefon})<br>
           Utilaj: ${client.utilaj}<br>
           Status: ${client.status}<br>
           Data aducerii: ${client.dataOra}<br>
           Reparație contra cost: ${contraCostText}<br>
+          Piese schimbate: <div class="piese-list">${pieseText}</div>
           Cod client: ${client.cod}<br>
-          <button onclick="schimbaStatus(${i})">Schimbă status</button>`;
+          <button onclick="schimbaStatus(${i})">Schimbă status</button>
+          <button onclick="adaugaPiesa(${i})">Adaugă piesă schimbată</button>`;
         container.appendChild(box);
       });
     }
@@ -187,6 +215,19 @@
       } else {
         div.textContent = 'Status activ: Niciun client adăugat';
       }
+    }
+
+    function cautaClient() {
+      const val = document.getElementById('cauta').value.trim().toLowerCase();
+      if(val === '') {
+        filtrati = clienti.slice();
+      } else {
+        filtrati = clienti.filter(c => 
+          c.nume.toLowerCase().includes(val) || 
+          c.cod.toLowerCase().includes(val)
+        );
+      }
+      afiseazaClienti();
     }
 
     window.onload = () => {
