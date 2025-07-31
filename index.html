@@ -8,6 +8,17 @@
     input, select, button { margin: 5px; padding: 8px; }
     .sms-box { background: #e0ffe0; padding: 10px; margin-top: 10px; border: 1px solid #b2d8b2; }
     .client-box { background: #fff; padding: 10px; margin-top: 10px; border: 1px solid #ccc; }
+    #status-activ {
+      position: fixed;
+      top: 10px; right: 10px;
+      background: #222; color: #fff;
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-weight: bold;
+      box-shadow: 0 0 10px #0008;
+      max-width: 300px;
+      z-index: 1000;
+    }
   </style>
 </head>
 <body>
@@ -28,6 +39,8 @@
 
   <div id="clienti"></div>
 
+  <div id="status-activ">Status activ: Niciun client adăugat</div>
+
   <script>
     let counter = 1234;
     let clienti = [];
@@ -40,6 +53,7 @@
           const lastCod = clienti[clienti.length -1].cod;
           const num = parseInt(lastCod.replace('GDM','')) + 1;
           if(!isNaN(num)) counter = num;
+          updateStatusActiv(clienti[clienti.length -1]);
         }
       }
     }
@@ -48,7 +62,6 @@
       localStorage.setItem('clientiGDM', JSON.stringify(clienti));
     }
 
-    // Formatează data și ora în format DD.MM.YYYY, HH:MM
     function formatDataOra(date) {
       const zi = String(date.getDate()).padStart(2, '0');
       const luna = String(date.getMonth() + 1).padStart(2, '0');
@@ -72,11 +85,12 @@
       const cod = 'GDM' + counter++;
       const dataOra = formatDataOra(new Date());
 
-      const client = { nume, telefon, utilaj, status, cod, dataOra };
+      const client = { nume, telefon, utilaj, status, cod, dataOra, contraCost: false, pret: 0 };
       clienti.push(client);
       salvareClienti();
       afiseazaClienti();
       simuleazaSMS(client);
+      updateStatusActiv(client);
 
       document.getElementById('nume').value = '';
       document.getElementById('telefon').value = '';
@@ -88,11 +102,35 @@
       const client = clienti[index];
       const optiuni = ['Diagnosticare', 'Reparat', 'Nereparat', 'Nu se mai repară'];
       let nouStatus = prompt(`Alege noul status pentru ${client.nume}:\n` + optiuni.join('\n'), client.status);
+
       if (nouStatus && optiuni.includes(nouStatus)) {
         client.status = nouStatus;
+
+        if(nouStatus === 'Reparat') {
+          let contra = confirm("Reparația este contra cost?");
+          if(contra) {
+            let pret = prompt("Introdu prețul pentru reparație (ex: 250):", client.pret > 0 ? client.pret : '');
+            pret = parseFloat(pret);
+            if(isNaN(pret) || pret < 0) {
+              alert("Preț invalid, se va seta 0.");
+              pret = 0;
+            }
+            client.contraCost = true;
+            client.pret = pret;
+          } else {
+            client.contraCost = false;
+            client.pret = 0;
+          }
+        } else {
+          // resetăm dacă nu e reparat
+          client.contraCost = false;
+          client.pret = 0;
+        }
+
         salvareClienti();
         afiseazaClienti();
         simuleazaSMS(client);
+        updateStatusActiv(client);
       } else {
         alert('Status invalid sau modificare anulată');
       }
@@ -103,7 +141,12 @@
       if(client.status === 'Diagnosticare') {
         mesaj += ' Revenim cu diagnosticul.';
       } else if(client.status === 'Reparat') {
-        mesaj += ' Reparația a fost finalizată. Vă rugăm să ridicați utilajul.';
+        mesaj += ' Reparația a fost finalizată.';
+        if(client.contraCost) {
+          mesaj += ` Costul este ${client.pret} RON. Vă rugăm să achitați.`;
+        } else {
+          mesaj += ' Serviciul este gratuit.';
+        }
       } else if(client.status === 'Nereparat') {
         mesaj += ' Reparația nu a putut fi efectuată.';
       } else if(client.status === 'Nu se mai repară') {
@@ -122,14 +165,28 @@
       clienti.forEach((client, i) => {
         const box = document.createElement('div');
         box.className = 'client-box';
+
+        let contraCostText = client.contraCost ? `Da, Preț: ${client.pret} RON` : 'Nu';
+        
         box.innerHTML = `<strong>${client.nume}</strong> (${client.telefon})<br>
           Utilaj: ${client.utilaj}<br>
           Status: ${client.status}<br>
           Data aducerii: ${client.dataOra}<br>
+          Reparație contra cost: ${contraCostText}<br>
           Cod client: ${client.cod}<br>
           <button onclick="schimbaStatus(${i})">Schimbă status</button>`;
         container.appendChild(box);
       });
+    }
+
+    function updateStatusActiv(client) {
+      const div = document.getElementById('status-activ');
+      if(client) {
+        let contraCostText = client.contraCost ? ` (Contra cost: ${client.pret} RON)` : '';
+        div.textContent = `Status activ: ${client.nume} - ${client.status}${contraCostText}`;
+      } else {
+        div.textContent = 'Status activ: Niciun client adăugat';
+      }
     }
 
     window.onload = () => {
