@@ -1,29 +1,22 @@
-import zipfile
-import os
-
-# Creează structura proiectului
-demo_dir = "gdm_repair_demo"
-os.makedirs(demo_dir, exist_ok=True)
-
-# index.html simplu cu demo funcțional
-html_content = """
 <!DOCTYPE html>
 <html lang="ro">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>GDM REPAIR SRL - Panou Admin</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
-    input, select, button { margin: 5px; padding: 8px; }
+    input, button { margin: 5px; padding: 8px; }
     .sms-box { background: #e0ffe0; padding: 10px; margin-top: 10px; border: 1px solid #b2d8b2; }
     .client-box { background: #fff; padding: 10px; margin-top: 10px; border: 1px solid #ccc; }
   </style>
 </head>
 <body>
   <h1>GDM REPAIR SRL - Panou Admin</h1>
-  <label>Nume client: <input type="text" id="nume"></label>
-  <label>Telefon: <input type="text" id="telefon"></label>
+
+  <label>Nume client: <input type="text" id="nume" /></label>
+  <label>Telefon: <input type="text" id="telefon" /></label>
   <button onclick="adaugaClient()">Adaugă client</button>
+
   <div id="clienti"></div>
 
   <script>
@@ -33,21 +26,27 @@ html_content = """
     function adaugaClient() {
       const nume = document.getElementById('nume').value.trim();
       const telefon = document.getElementById('telefon').value.trim();
-      if (!nume || !telefon) return alert('Completează toate câmpurile');
+      if (!nume || !telefon) {
+        alert('Completează toate câmpurile');
+        return;
+      }
 
       const cod = 'GDM' + counter++;
       const client = { nume, telefon, cod, status: 'Primire utilaj' };
       clienti.push(client);
       afiseazaClienti();
       simuleazaSMS(client, 'Primire utilaj');
+
+      // Curățare câmpuri
+      document.getElementById('nume').value = '';
+      document.getElementById('telefon').value = '';
     }
 
     function schimbaStatus(index) {
       const client = clienti[index];
-      const nouStatus = client.status === 'Primire utilaj' ? 'Reparație finalizată' : 'Primire utilaj';
-      client.status = nouStatus;
+      client.status = client.status === 'Primire utilaj' ? 'Reparație finalizată' : 'Primire utilaj';
       afiseazaClienti();
-      simuleazaSMS(client, nouStatus);
+      simuleazaSMS(client, client.status);
     }
 
     function simuleazaSMS(client, status) {
@@ -67,26 +66,16 @@ html_content = """
     function afiseazaClienti() {
       const container = document.getElementById('clienti');
       container.innerHTML = '';
-      clienti.forEach((c, i) => {
+      clienti.forEach((client, i) => {
         const box = document.createElement('div');
         box.className = 'client-box';
-        box.innerHTML = `<strong>${c.nume}</strong> (${c.telefon})<br>Status: ${c.status}<br>Cod client: ${c.cod}<br>
-        <button onclick="schimbaStatus(${i})">Schimbă status</button>`;
+        box.innerHTML = `<strong>${client.nume}</strong> (${client.telefon})<br>
+          Status: ${client.status}<br>
+          Cod client: ${client.cod}<br>
+          <button onclick="schimbaStatus(${i})">Schimbă status</button>`;
         container.appendChild(box);
       });
     }
   </script>
 </body>
 </html>
-"""
-
-with open(os.path.join(demo_dir, "index.html"), "w", encoding="utf-8") as f:
-    f.write(html_content)
-
-# Creează fișierul ZIP
-with zipfile.ZipFile("gdm_repair_demo.zip", "w") as demo_zip:
-    for root, _, files in os.walk(demo_dir):
-        for file in files:
-            filepath = os.path.join(root, file)
-            arcname = os.path.relpath(filepath, demo_dir)
-            demo_zip.write(filepath, arcname)
