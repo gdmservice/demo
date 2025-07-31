@@ -142,7 +142,13 @@
           client.pret = 0;
         }
 
-        salvareClienti();
+        // Actualizează în lista completă (clienti)
+        const idxReal = clienti.findIndex(c => c.cod === client.cod);
+        if(idxReal !== -1){
+          clienti[idxReal] = client;
+          salvareClienti();
+        }
+
         afiseazaClienti();
         simuleazaSMS(client);
         updateStatusActiv(client);
@@ -156,7 +162,13 @@
       let piesa = prompt(`Introdu denumirea piesei schimbate pentru ${client.nume}:`);
       if (piesa && piesa.trim() !== '') {
         client.pieseSchimbate.push(piesa.trim());
-        salvareClienti();
+
+        const idxReal = clienti.findIndex(c => c.cod === client.cod);
+        if(idxReal !== -1){
+          clienti[idxReal] = client;
+          salvareClienti();
+        }
+
         afiseazaClienti();
       } else {
         alert('Denumire piesă invalidă.');
@@ -189,6 +201,12 @@
     function afiseazaClienti() {
       const container = document.getElementById('clienti');
       container.innerHTML = '';
+      if(filtrati.length === 0){
+        container.innerHTML = '<p>Nu există clienți de afișat.</p>';
+        updateStatusActiv({nume: 'Niciun client', status: '-'});
+        return;
+      }
+
       filtrati.forEach((client, i) => {
         const box = document.createElement('div');
         box.className = 'client-box';
@@ -209,6 +227,8 @@
 
         container.appendChild(box);
       });
+
+      updateStatusActiv(filtrati[0]);
     }
 
     function cautaClient() {
